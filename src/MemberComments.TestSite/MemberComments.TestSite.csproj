@@ -8,6 +8,8 @@
 
   <ItemGroup>
     <PackageReference Include="Umbraco.Cms" Version="17.0.0" />
+    <PackageReference Include="Umbraco.Cms.DevelopmentMode.Backoffice" Version="17.0.0" />
+    <PackageReference Include="Umbraco.TheStarterKit" Version="17.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,6 +26,12 @@
   <PropertyGroup>
     <!-- Razor files are needed for the backoffice to work correctly -->
     <CopyRazorGenerateFilesToPublishDirectory>true</CopyRazorGenerateFilesToPublishDirectory>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Required with ModelsMode InMemoryAuto (default when using DevelopmentMode.Backoffice); avoids compile-time references to generated PublishedModels types -->
+    <RazorCompileOnBuild>false</RazorCompileOnBuild>
+    <RazorCompileOnPublish>false</RazorCompileOnPublish>
   </PropertyGroup>
 
 </Project>
