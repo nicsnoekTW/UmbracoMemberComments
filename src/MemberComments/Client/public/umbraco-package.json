@@ -1,0 +1,14 @@
+{
+  "id": "MemberComments",
+  "name": "MemberComments",
+  "version": "0.0.0",
+  "allowTelemetry": true,
+  "extensions": [
+    {
+      "name": "Member Comments Bundle",
+      "alias": "MemberComments.Bundle",
+      "type": "bundle",
+      "js": "/App_Plugins/MemberComments/member-comments.js"
+    }
+  ]
+}
