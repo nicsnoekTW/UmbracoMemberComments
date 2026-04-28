@@ -23,6 +23,12 @@ public sealed class Comment
 
     public DateTimeOffset CreatedUtc { get; set; }
 
-    /// <summary>When the comment was last edited; null if never edited.</summary>
+    /// <summary>When the comment was last edited; null if never edited (while not deleted).</summary>
     public DateTimeOffset? EditedUtc { get; set; }
+
+    /// <summary>When set, the comment is soft-deleted (UI shows placeholder text and deleted timestamp).</summary>
+    public DateTimeOffset? DeletedUtc { get; set; }
+
+    /// <summary>Umbraco member integer id when the last edit or soft-delete was performed by a moderator on another member&apos;s comment.</summary>
+    public int? ModeratorId { get; set; }
 }

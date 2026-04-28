@@ -1,12 +1,10 @@
-using MemberComments.Services;
-
 namespace MemberComments.ViewModels;
 
 public sealed class MemberCommentsViewModel
 {
     public Guid ContentKey { get; init; }
 
-    public IReadOnlyList<MemberCommentsDisplayRow> Rows { get; init; } = Array.Empty<MemberCommentsDisplayRow>();
+    public IReadOnlyList<CommentThreadNode> RootThreads { get; init; } = Array.Empty<CommentThreadNode>();
 
     public bool CanView { get; init; }
 

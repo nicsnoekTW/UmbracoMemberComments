@@ -10,5 +10,9 @@ public sealed class MemberCommentsPackageMigrationPlan : PackageMigrationPlan
     {
     }
 
-    protected override void DefinePlan() => To<ApplyMemberCommentsEfMigrations>("membercomments-ef-initial");
+    protected override void DefinePlan()
+    {
+        To<ApplyMemberCommentsEfMigrations>("membercomments-ef-initial");
+        To<ApplyMemberCommentsEfMigrations>("membercomments-ef-softdelete-moderator");
+    }
 }

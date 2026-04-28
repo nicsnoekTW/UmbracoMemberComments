@@ -4,7 +4,11 @@ For client build steps and file watching, see [README.txt](README.txt).
 
 ## Page comments (members)
 
-The package adds a **member commenting** feature: comments are stored in the Umbraco database (EF Core), scoped to a content page (`ContentKey`), with optional **threaded replies** (`ParentId`). Only members who can access the page (public access rules) can post; edits are allowed for the **original author** or anyone in the **Comment moderators** member group (exact name).
+The package adds a **member commenting** feature: comments are stored in the Umbraco database (EF Core), scoped to a content page (`ContentKey`), with **nested replies** under the parent comment (`ParentId`). Only members who can access the page (public access rules) can post; **edit** and **soft delete** are allowed for the **original author** or anyone in the **Comment moderators** member group (exact name).
+
+**Soft delete** sets `DeletedUtc`; the UI shows **`[comment deleted]`** when the author removed it, or **`[comment deleted by moderator]`** when a moderator removed someone else’s comment, plus a **Deleted at …** timestamp (original body remains in the database). **Replies** to a deleted comment are blocked.
+
+When a moderator edits someone else’s comment, the UI shows **Edited by moderator at …** (no moderator name). The row stores the Umbraco member integer id in **`ModeratorId`** for the last moderator edit or moderator-led soft-delete on another member’s comment.
 
 ### 1. Reference the package
 
@@ -18,7 +22,7 @@ In **Settings → Members → Member groups**, create a group named exactly:
 
 `Comment moderators`
 
-Assign members who should be allowed to edit **any** comment on the site.
+Assign members who should be allowed to **edit or soft-delete any** comment on the site.
 
 ### 3. Include the comments partial in a template
 

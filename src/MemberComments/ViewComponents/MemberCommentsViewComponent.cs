@@ -1,3 +1,4 @@
+using MemberComments;
 using MemberComments.Services;
 using MemberComments.ViewModels;
 using Microsoft.AspNetCore.Mvc;
@@ -46,18 +47,14 @@ public sealed class MemberCommentsViewComponent : ViewComponent
             await _memberManager.IsMemberAuthorizedAsync(allowGroups: new[] { Constants.CommentModeratorsGroupName });
 
         IReadOnlyList<CommentViewModel> comments = await _commentService.GetCommentsForContentAsync(contentKey);
-        var byId = comments.ToDictionary(c => c.Id);
-        var rows = comments
-            .OrderBy(c => c.CreatedUtc)
-            .Select(c => new MemberCommentsDisplayRow(c, Depth(c, byId)))
-            .ToList();
+        IReadOnlyList<CommentThreadNode> roots = BuildThreadTree(comments);
 
         string? error = ViewContext.TempData?["MemberCommentsError"] as string;
 
         return View(new MemberCommentsViewModel
         {
             ContentKey = contentKey,
-            Rows = rows,
+            RootThreads = roots,
             CanView = true,
             CanPost = canPost,
             IsModerator = isModerator,
@@ -66,20 +63,36 @@ public sealed class MemberCommentsViewComponent : ViewComponent
         });
     }
 
-    private static int Depth(CommentViewModel comment, IReadOnlyDictionary<int, CommentViewModel> byId)
+    private static IReadOnlyList<CommentThreadNode> BuildThreadTree(IReadOnlyList<CommentViewModel> flat)
     {
-        int depth = 0;
-        int? parentId = comment.ParentId;
-        while (parentId is int pid && byId.TryGetValue(pid, out CommentViewModel? parent))
+        if (flat.Count == 0)
         {
-            depth++;
-            parentId = parent.ParentId;
-            if (depth > 64)
-            {
-                break;
-            }
+            return Array.Empty<CommentThreadNode>();
         }
 
-        return depth;
+        Dictionary<int, List<CommentViewModel>> childrenByParent = flat
+            .Where(c => c.ParentId.HasValue)
+            .GroupBy(c => c.ParentId!.Value)
+            .ToDictionary(g => g.Key, g => g.OrderBy(c => c.CreatedUtc).ToList());
+
+        return flat
+            .Where(c => c.ParentId is null)
+            .OrderBy(c => c.CreatedUtc)
+            .Select(root => new CommentThreadNode(root, BuildChildren(root.Id, childrenByParent)))
+            .ToList();
+    }
+
+    private static IReadOnlyList<CommentThreadNode> BuildChildren(
+        int parentId,
+        Dictionary<int, List<CommentViewModel>> childrenByParent)
+    {
+        if (childrenByParent.TryGetValue(parentId, out List<CommentViewModel>? kids) is false)
+        {
+            return Array.Empty<CommentThreadNode>();
+        }
+
+        return kids
+            .Select(k => new CommentThreadNode(k, BuildChildren(k.Id, childrenByParent)))
+            .ToList();
     }
 }
