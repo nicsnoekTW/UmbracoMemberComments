@@ -1,0 +1,54 @@
+.member-comments {
+  /* Same cap as .member-comments__input (subject); keep editor width aligned */
+  --member-comments-field-max-width: 40rem;
+}
+
+.member-comments__optional {
+  font-weight: normal;
+  opacity: 0.75;
+}
+
+.member-comments__subject {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.35rem 0 0.5rem;
+}
+
+.member-comments__body--html {
+  line-height: 1.5;
+}
+
+.member-comments__body--html :first-child {
+  margin-top: 0;
+}
+
+.member-comments__body--html :last-child {
+  margin-bottom: 0;
+}
+
+.member-comments__input {
+  display: block;
+  width: 100%;
+  max-width: var(--member-comments-field-max-width);
+  margin-bottom: 0.75rem;
+  padding: 0.35rem 0.5rem;
+  box-sizing: border-box;
+}
+
+/* CKEditor 5 Classic: match subject line width; large editing area inside */
+.member-comments .ck.ck-editor {
+  width: 100%;
+  max-width: var(--member-comments-field-max-width);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.member-comments textarea.member-comments__richtext {
+  width: 100%;
+  max-width: var(--member-comments-field-max-width);
+  box-sizing: border-box;
+}
+
+.member-comments .ck-content {
+  min-height: 320px;
+}

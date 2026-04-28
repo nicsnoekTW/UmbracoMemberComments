@@ -18,6 +18,7 @@ public sealed class MemberCommentsComposer : IComposer
 
         builder.PackageMigrationPlans().Add<MemberCommentsPackageMigrationPlan>();
 
+        builder.Services.AddSingleton<ICommentBodyHtmlSanitizer, CommentBodyHtmlSanitizer>();
         builder.Services.AddScoped<ICommentService, CommentService>();
     }
 }

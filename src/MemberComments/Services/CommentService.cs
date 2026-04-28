@@ -8,11 +8,18 @@ namespace MemberComments.Services;
 
 public sealed class CommentService : ICommentService
 {
-    private const int MaxTextLength = 4000;
+    private const int MaxSubjectLength = 256;
+    private const int MaxTextLength = 100_000;
     private readonly IEFCoreScopeProvider<MemberCommentsDbContext> _efCoreScopeProvider;
+    private readonly ICommentBodyHtmlSanitizer _htmlSanitizer;
 
-    public CommentService(IEFCoreScopeProvider<MemberCommentsDbContext> efCoreScopeProvider) =>
+    public CommentService(
+        IEFCoreScopeProvider<MemberCommentsDbContext> efCoreScopeProvider,
+        ICommentBodyHtmlSanitizer htmlSanitizer)
+    {
         _efCoreScopeProvider = efCoreScopeProvider;
+        _htmlSanitizer = htmlSanitizer;
+    }
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<CommentViewModel>> GetCommentsForContentAsync(
@@ -43,15 +50,24 @@ public sealed class CommentService : ICommentService
         int? parentId,
         Guid memberKey,
         string authorName,
+        string? subject,
         string text,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(text))
+        string subjectTrimmed = NormalizeSubject(subject);
+
+        if (subjectTrimmed.Length > MaxSubjectLength)
+        {
+            return CommentSaveResult.Fail($"Subject cannot exceed {MaxSubjectLength} characters.");
+        }
+
+        string sanitized = _htmlSanitizer.SanitizeForStorageAndDisplay(text);
+        if (CommentBodyHtmlSanitizer.IsVisuallyEmpty(sanitized))
         {
             return CommentSaveResult.Fail("Comment cannot be empty.");
         }
 
-        if (text.Length > MaxTextLength)
+        if (sanitized.Length > MaxTextLength)
         {
             return CommentSaveResult.Fail($"Comment cannot exceed {MaxTextLength} characters.");
         }
@@ -88,7 +104,8 @@ public sealed class CommentService : ICommentService
                 ParentId = parentId,
                 MemberKey = memberKey,
                 AuthorName = authorName.Trim(),
-                Text = text.Trim(),
+                Subject = subjectTrimmed,
+                Text = sanitized,
                 CreatedUtc = DateTimeOffset.UtcNow,
                 EditedUtc = null,
                 DeletedUtc = null,
@@ -111,17 +128,25 @@ public sealed class CommentService : ICommentService
         Guid memberKey,
         bool isModerator,
         int? moderatorMemberIntId,
+        string? newSubject,
         string newText,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(newText))
+        string subjectTrimmed = NormalizeSubject(newSubject);
+        string sanitized = _htmlSanitizer.SanitizeForStorageAndDisplay(newText);
+        if (CommentBodyHtmlSanitizer.IsVisuallyEmpty(sanitized))
         {
             return CommentSaveResult.Fail("Comment cannot be empty.");
         }
 
-        if (newText.Length > MaxTextLength)
+        if (sanitized.Length > MaxTextLength)
         {
             return CommentSaveResult.Fail($"Comment cannot exceed {MaxTextLength} characters.");
+        }
+
+        if (subjectTrimmed.Length > MaxSubjectLength)
+        {
+            return CommentSaveResult.Fail($"Subject cannot exceed {MaxSubjectLength} characters.");
         }
 
         Guid contentKey = page.Key;
@@ -162,7 +187,8 @@ public sealed class CommentService : ICommentService
                 entity.ModeratorId = moderatorMemberIntId;
             }
 
-            entity.Text = newText.Trim();
+            entity.Subject = subjectTrimmed;
+            entity.Text = sanitized;
             entity.EditedUtc = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
             return CommentSaveResult.Ok();
@@ -229,24 +255,29 @@ public sealed class CommentService : ICommentService
         return result;
     }
 
-    private static CommentViewModel MapToViewModel(Comment c)
+    private CommentViewModel MapToViewModel(Comment c)
     {
         bool isDeleted = c.DeletedUtc.HasValue;
         string publicText = isDeleted
             ? (c.ModeratorId.HasValue
                 ? CommentViewModel.DeletedCommentByModeratorPlaceholder
                 : CommentViewModel.DeletedCommentPlaceholder)
-            : c.Text;
+            : _htmlSanitizer.SanitizeForStorageAndDisplay(c.Text);
+
+        string publicSubject = isDeleted ? string.Empty : c.Subject.Trim();
 
         return new CommentViewModel(
             c.Id,
             c.ParentId,
             c.MemberKey,
             c.AuthorName,
+            publicSubject,
             publicText,
             c.CreatedUtc,
             c.EditedUtc,
             c.DeletedUtc,
             c.ModeratorId);
     }
+
+    private static string NormalizeSubject(string? subject) => subject?.Trim() ?? string.Empty;
 }

@@ -67,7 +67,7 @@ public sealed class CommentsSurfaceController : SurfaceController
 
         if (ModelState.IsValid is false)
         {
-            TempData["MemberCommentsError"] = "Please enter a valid comment.";
+            TempData["MemberCommentsError"] = "Please check the comment form and try again.";
             return RedirectToUmbracoPage(page);
         }
 
@@ -77,6 +77,7 @@ public sealed class CommentsSurfaceController : SurfaceController
             model.ParentId,
             member.Key,
             authorName,
+            model.Subject,
             model.Text ?? string.Empty,
             cancellationToken);
 
@@ -126,6 +127,7 @@ public sealed class CommentsSurfaceController : SurfaceController
             member.Key,
             isModerator,
             moderatorMemberIntId,
+            model.Subject,
             model.Text ?? string.Empty,
             cancellationToken);
 

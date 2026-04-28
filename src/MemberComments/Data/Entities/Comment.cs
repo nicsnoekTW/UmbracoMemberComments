@@ -19,6 +19,10 @@ public sealed class Comment
     /// <summary>Display name captured when the comment was created.</summary>
     public string AuthorName { get; set; } = string.Empty;
 
+    /// <summary>Plain-text title shown above the comment body (required for root comments).</summary>
+    public string Subject { get; set; } = string.Empty;
+
+    /// <summary>Sanitized HTML body from the rich-text editor.</summary>
     public string Text { get; set; } = string.Empty;
 
     public DateTimeOffset CreatedUtc { get; set; }

@@ -6,6 +6,7 @@
   </PropertyGroup>
   
   <ItemGroup>
+    <PackageVersion Include="HtmlSanitizer" Version="9.0.892" />
     <!-- Umbraco API packages - Used by extension templates -->
     <PackageVersion Include="Umbraco.Cms.Api.Common" Version="17.3.4" />
     <PackageVersion Include="Umbraco.Cms.Api.Management" Version="17.3.4" />

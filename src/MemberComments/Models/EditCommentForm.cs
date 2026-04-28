@@ -10,7 +10,10 @@ public sealed class EditCommentForm
     [Required]
     public int CommentId { get; set; }
 
+    [StringLength(256)]
+    public string? Subject { get; set; }
+
     [Required]
-    [StringLength(4000, MinimumLength = 1)]
+    [StringLength(100_000)]
     public string? Text { get; set; }
 }

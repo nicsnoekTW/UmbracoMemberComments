@@ -14,6 +14,7 @@ public interface ICommentService
         int? parentId,
         Guid memberKey,
         string authorName,
+        string? subject,
         string text,
         CancellationToken cancellationToken = default);
 
@@ -23,6 +24,7 @@ public interface ICommentService
         Guid memberKey,
         bool isModerator,
         int? moderatorMemberIntId,
+        string? newSubject,
         string newText,
         CancellationToken cancellationToken = default);
 

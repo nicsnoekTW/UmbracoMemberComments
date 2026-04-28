@@ -1,4 +1,3 @@
-@using MemberComments
 @using MemberComments.Controllers
 @using MemberComments.Models
 @using MemberComments.ViewModels
@@ -7,6 +6,8 @@
 {
     return;
 }
+
+<link rel="stylesheet" href="~/css/member-comments-frontend.css" asp-append-version="true" />
 
 <section class="member-comments" aria-labelledby="member-comments-heading">
     <h2 id="member-comments-heading" class="member-comments__title">Comments</h2>
@@ -30,10 +31,17 @@
             @using (Html.BeginUmbracoForm<CommentsSurfaceController>(nameof(CommentsSurfaceController.Create), FormMethod.Post))
             {
                 <input type="hidden" name="@nameof(CreateCommentForm.ContentKey)" value="@Model.ContentKey" />
+                <label class="member-comments__label" for="new-comment-subject">Subject <span class="member-comments__optional">(optional)</span></label>
+                <input type="text" id="new-comment-subject" name="@nameof(CreateCommentForm.Subject)" maxlength="256" class="member-comments__input" autocomplete="off" />
                 <label class="member-comments__label" for="new-comment-text">Comment</label>
-                <textarea id="new-comment-text" name="@nameof(CreateCommentForm.Text)" rows="4" maxlength="4000" required class="member-comments__textarea"></textarea>
+                <textarea id="new-comment-text" name="@nameof(CreateCommentForm.Text)" class="member-comments__textarea member-comments__richtext" rows="12"></textarea>
                 <button type="submit" class="member-comments__submit">Post comment</button>
             }
         </div>
     }
 </section>
+
+@if (Model.CanPost || Model.IsModerator)
+{
+    <partial name="_MemberCommentsScripts" />
+}

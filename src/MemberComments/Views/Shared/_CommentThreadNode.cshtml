@@ -23,7 +23,18 @@
             <time datetime="@c.CreatedUtc.ToString("o")" class="member-comments__time">@c.CreatedUtc.LocalDateTime.ToString("u")</time>
         }
     </div>
-    <div class="member-comments__body">@c.Text</div>
+    @if (c.IsDeleted is false && string.IsNullOrEmpty(c.Subject) is false)
+    {
+        <p class="member-comments__subject">@c.Subject</p>
+    }
+    @if (c.IsDeleted)
+    {
+        <div class="member-comments__body">@c.Text</div>
+    }
+    else
+    {
+        <div class="member-comments__body member-comments__body--html">@Html.Raw(c.Text)</div>
+    }
 
     @if (pageVm.CanPost && c.IsDeleted is false && c.MemberKey != pageVm.CurrentMemberKey)
     {
@@ -33,8 +44,10 @@
             {
                 <input type="hidden" name="@nameof(CreateCommentForm.ContentKey)" value="@pageVm.ContentKey" />
                 <input type="hidden" name="@nameof(CreateCommentForm.ParentId)" value="@c.Id" />
+                <label class="member-comments__label" for="reply-subject-@c.Id">Subject <span class="member-comments__optional">(optional)</span></label>
+                <input type="text" id="reply-subject-@c.Id" name="@nameof(CreateCommentForm.Subject)" maxlength="256" class="member-comments__input" autocomplete="off" />
                 <label class="member-comments__label" for="reply-@c.Id">Your reply</label>
-                <textarea id="reply-@c.Id" name="@nameof(CreateCommentForm.Text)" rows="3" maxlength="4000" required class="member-comments__textarea"></textarea>
+                <textarea id="reply-@c.Id" name="@nameof(CreateCommentForm.Text)" rows="10" class="member-comments__textarea member-comments__richtext"></textarea>
                 <button type="submit" class="member-comments__submit">Reply</button>
             }
         </details>
@@ -52,8 +65,10 @@
                 {
                     <input type="hidden" name="@nameof(EditCommentForm.ContentKey)" value="@pageVm.ContentKey" />
                     <input type="hidden" name="@nameof(EditCommentForm.CommentId)" value="@c.Id" />
+                    <label class="member-comments__label" for="edit-subject-@c.Id">Subject <span class="member-comments__optional">(optional)</span></label>
+                    <input type="text" id="edit-subject-@c.Id" name="@nameof(EditCommentForm.Subject)" value="@c.Subject" maxlength="256" class="member-comments__input" autocomplete="off" />
                     <label class="member-comments__label" for="edit-@c.Id">Edit comment</label>
-                    <textarea id="edit-@c.Id" name="@nameof(EditCommentForm.Text)" rows="3" maxlength="4000" required class="member-comments__textarea">@c.Text</textarea>
+                    <textarea id="edit-@c.Id" name="@nameof(EditCommentForm.Text)" rows="10" class="member-comments__textarea member-comments__richtext">@Html.Raw(c.Text)</textarea>
                     <button type="submit" class="member-comments__submit">Save changes</button>
                 }
                 @using (Html.BeginUmbracoForm<CommentsSurfaceController>(nameof(CommentsSurfaceController.Delete), FormMethod.Post))

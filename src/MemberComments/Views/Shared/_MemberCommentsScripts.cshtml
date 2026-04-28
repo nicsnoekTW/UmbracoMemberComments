@@ -1,0 +1,117 @@
+@*
+  CKEditor 5 v47.6.0 — Classic editor with explicit plugins (npm browser UMD + GPL).
+  https://github.com/ckeditor/ckeditor5/tree/v47.6.0
+
+  The npm UMD build does not preload plugins onto ClassicEditor; you must extend ClassicEditor
+  with static builtinPlugins (see https://ckeditor.com/docs/ckeditor5/latest/installation/getting-started/predefined-builds.html).
+  Otherwise the toolbar references features that were never registered → toolbarview-item-unavailable.
+
+  Scripts from jsDelivr (npm dist/browser) so licenseKey 'GPL' is valid (not cdn.ckeditor.com cloud build).
+*@
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ckeditor5@47.6.0/dist/browser/ckeditor5.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+<script src="https://cdn.jsdelivr.net/npm/ckeditor5@47.6.0/dist/browser/ckeditor5.umd.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+(function () {
+  const CK = window.CKEDITOR;
+  if (!CK || !CK.ClassicEditor) {
+    return;
+  }
+
+  const editors = new WeakMap();
+
+  /** Minimal classic editor: only plugins required for the configured toolbar items. */
+  class MemberCommentsClassicEditor extends CK.ClassicEditor {
+    static builtinPlugins = [
+      CK.Essentials,
+      CK.Paragraph,
+      CK.Bold,
+      CK.Italic,
+      CK.Underline,
+      CK.Strikethrough,
+      CK.Link,
+      CK.List,
+      CK.Indent,
+      CK.BlockQuote,
+      CK.CodeBlock,
+      CK.SourceEditing
+    ];
+
+    static defaultConfig = {
+      toolbar: {
+        items: [
+          'bold', 'italic', 'underline', 'strikethrough',
+          '|',
+          'link',
+          '|',
+          'bulletedList', 'numberedList',
+          '|',
+          'blockQuote', 'codeBlock',
+          '|',
+          'sourceEditing'
+        ],
+        shouldNotGroupWhenFull: true
+      },
+      language: 'en'
+    };
+  }
+
+  function syncEditorsFromInstances() {
+    document.querySelectorAll('textarea.member-comments__richtext').forEach(function (el) {
+      const ed = editors.get(el);
+      if (ed && typeof ed.updateSourceElement === 'function') {
+        ed.updateSourceElement();
+      }
+    });
+  }
+
+  function bindDelegatedSubmit() {
+    const root = document.querySelector('.member-comments');
+    if (!root || root.dataset.ckFormBound === '1') return;
+    root.dataset.ckFormBound = '1';
+    root.addEventListener(
+      'submit',
+      function (e) {
+        var t = e.target;
+        if (t && t.tagName === 'FORM') {
+          syncEditorsFromInstances();
+        }
+      },
+      true
+    );
+  }
+
+  function createEditor(el) {
+    if (el.dataset.ckAttached === '1') return;
+    el.dataset.ckAttached = '1';
+    MemberCommentsClassicEditor.create(el, { licenseKey: 'GPL' })
+      .then(function (editor) {
+        editors.set(el, editor);
+      })
+      .catch(function (err) {
+        el.dataset.ckAttached = '0';
+        if (typeof console !== 'undefined' && console.error) {
+          console.error('MemberComments: CKEditor failed to start.', err);
+        }
+      });
+  }
+
+  function initEditors() {
+    bindDelegatedSubmit();
+    document.querySelectorAll('textarea.member-comments__richtext').forEach(createEditor);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initEditors);
+  } else {
+    initEditors();
+  }
+
+  document.querySelectorAll('.member-comments__reply, .member-comments__edit').forEach(function (details) {
+    details.addEventListener('toggle', function () {
+      if (details.open) {
+        details.querySelectorAll('textarea.member-comments__richtext').forEach(createEditor);
+      }
+    });
+  });
+})();
+</script>

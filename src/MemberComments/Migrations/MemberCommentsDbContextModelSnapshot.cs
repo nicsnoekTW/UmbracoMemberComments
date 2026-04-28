@@ -49,9 +49,14 @@ namespace MemberComments.Migrations
                     b.Property<int?>("ParentId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Text")
                         .IsRequired()
-                        .HasMaxLength(4000)
+                        .HasMaxLength(100000)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");

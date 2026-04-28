@@ -1,11 +1,12 @@
 namespace MemberComments.Services;
 
-/// <summary>Public view of a comment row. <paramref name="Text"/> is a placeholder when <paramref name="DeletedUtc"/> is set (original body is only persisted in the database).</summary>
+/// <summary>Public view of a comment row. <paramref name="Text"/> is sanitized HTML, or a plain placeholder when <paramref name="DeletedUtc"/> is set.</summary>
 public sealed record CommentViewModel(
     int Id,
     int? ParentId,
     Guid MemberKey,
     string AuthorName,
+    string Subject,
     string Text,
     DateTimeOffset CreatedUtc,
     DateTimeOffset? EditedUtc,

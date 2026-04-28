@@ -24,6 +24,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="Umbraco.Cms.Web.Website" />
     <PackageReference Include="Umbraco.Cms.Web.Common" />
     <PackageReference Include="Umbraco.Cms.Api.Common" />
