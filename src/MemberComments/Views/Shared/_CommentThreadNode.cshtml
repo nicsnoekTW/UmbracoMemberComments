@@ -12,15 +12,15 @@
         <strong class="member-comments__author">@c.AuthorName</strong>
         @if (c.IsDeleted && c.DeletedUtc.HasValue)
         {
-            <time datetime="@c.DeletedUtc.Value.ToString("o")" class="member-comments__time">Deleted at @c.DeletedUtc.Value.LocalDateTime.ToString("u")</time>
+            <time datetime="@c.DeletedUtc.Value.ToString("o")" class="member-comments__time">Deleted at @c.DeletedUtc.Value.LocalDateTime.ToString("yyyy-MM-dd h:mm:ss tt")</time>
         }
         else if (c.EditedUtc.HasValue)
         {
-            <time datetime="@c.EditedUtc.Value.ToString("o")" class="member-comments__time">@(c.IsModeratorAttributedEdit ? "Edited by moderator at " : "Edited at ")@c.EditedUtc.Value.LocalDateTime.ToString("u")</time>
+            <time datetime="@c.EditedUtc.Value.ToString("o")" class="member-comments__time">@(c.IsModeratorAttributedEdit ? "Edited by moderator at " : "Edited at ")@c.EditedUtc.Value.LocalDateTime.ToString("yyyy-MM-dd h:mm:ss tt")</time>
         }
         else
         {
-            <time datetime="@c.CreatedUtc.ToString("o")" class="member-comments__time">@c.CreatedUtc.LocalDateTime.ToString("u")</time>
+            <time datetime="@c.CreatedUtc.ToString("o")" class="member-comments__time">@c.CreatedUtc.LocalDateTime.ToString("yyyy-MM-dd h:mm:ss tt")</time>
         }
     </div>
     @if (c.IsDeleted is false && string.IsNullOrEmpty(c.Subject) is false)

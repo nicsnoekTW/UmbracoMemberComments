@@ -21,6 +21,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MemberComments\MemberComments.csproj" />
+    <!-- Required so dotnet ef uses startup project; aligns with MemberComments EF tooling -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
   <PropertyGroup>
