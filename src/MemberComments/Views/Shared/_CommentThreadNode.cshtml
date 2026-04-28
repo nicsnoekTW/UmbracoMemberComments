@@ -46,8 +46,6 @@
             {
                 <input type="hidden" name="@nameof(CreateCommentForm.ContentKey)" value="@pageVm.ContentKey" />
                 <input type="hidden" name="@nameof(CreateCommentForm.ParentId)" value="@c.Id" />
-                <label class="member-comments__label" for="reply-subject-@c.Id">Subject <span class="member-comments__optional">(optional)</span></label>
-                <input type="text" id="reply-subject-@c.Id" name="@nameof(CreateCommentForm.Subject)" maxlength="256" class="member-comments__input" autocomplete="off" />
                 <label class="member-comments__label" for="reply-@c.Id">Your reply</label>
                 <textarea id="reply-@c.Id" name="@nameof(CreateCommentForm.Text)" rows="10" class="member-comments__textarea member-comments__richtext"></textarea>
                 <button type="submit" class="member-comments__submit">Reply</button>
