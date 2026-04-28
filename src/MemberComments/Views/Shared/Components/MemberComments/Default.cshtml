@@ -1,0 +1,84 @@
+@using MemberComments.Controllers
+@using MemberComments.Models
+@model MemberComments.ViewModels.MemberCommentsViewModel
+@if (Model.CanView is false)
+{
+    return;
+}
+
+<section class="member-comments" aria-labelledby="member-comments-heading">
+    <h2 id="member-comments-heading" class="member-comments__title">Comments</h2>
+
+    @if (string.IsNullOrEmpty(Model.ErrorMessage) is false)
+    {
+        <div class="member-comments__alert" role="alert">@Model.ErrorMessage</div>
+    }
+
+    <ul class="member-comments__list">
+        @foreach (var row in Model.Rows)
+        {
+            var c = row.Comment;
+            <li class="member-comments__item" style="margin-left: @(row.Depth * 1.25)rem">
+                <div class="member-comments__meta">
+                    <strong class="member-comments__author">@c.AuthorName</strong>
+                    @if (c.EditedUtc.HasValue)
+                    {
+                        <time datetime="@c.EditedUtc.Value.ToString("o")" class="member-comments__time">Edited at @c.EditedUtc.Value.LocalDateTime.ToString("u")</time>
+                    }
+                    else
+                    {
+                        <time datetime="@c.CreatedUtc.ToString("o")" class="member-comments__time">@c.CreatedUtc.LocalDateTime.ToString("u")</time>
+                    }
+                </div>
+                <div class="member-comments__body">@c.Text</div>
+
+                @if (Model.CanPost)
+                {
+                    <details class="member-comments__reply">
+                        <summary>Reply</summary>
+                        @using (Html.BeginUmbracoForm<CommentsSurfaceController>(nameof(CommentsSurfaceController.Create), FormMethod.Post))
+                        {
+                            <input type="hidden" name="@nameof(CreateCommentForm.ContentKey)" value="@Model.ContentKey" />
+                            <input type="hidden" name="@nameof(CreateCommentForm.ParentId)" value="@c.Id" />
+                            <label class="member-comments__label" for="reply-@c.Id">Your reply</label>
+                            <textarea id="reply-@c.Id" name="@nameof(CreateCommentForm.Text)" rows="3" maxlength="4000" required class="member-comments__textarea"></textarea>
+                            <button type="submit" class="member-comments__submit">Reply</button>
+                        }
+                    </details>
+                }
+
+                @{
+                    var canEdit = Model.CurrentMemberKey is Guid mk && (mk == c.MemberKey || Model.IsModerator);
+                }
+                @if (canEdit)
+                {
+                    <details class="member-comments__edit">
+                        <summary>Edit</summary>
+                        @using (Html.BeginUmbracoForm<CommentsSurfaceController>(nameof(CommentsSurfaceController.Edit), FormMethod.Post))
+                        {
+                            <input type="hidden" name="@nameof(EditCommentForm.ContentKey)" value="@Model.ContentKey" />
+                            <input type="hidden" name="@nameof(EditCommentForm.CommentId)" value="@c.Id" />
+                            <label class="member-comments__label" for="edit-@c.Id">Edit comment</label>
+                            <textarea id="edit-@c.Id" name="@nameof(EditCommentForm.Text)" rows="3" maxlength="4000" required class="member-comments__textarea">@c.Text</textarea>
+                            <button type="submit" class="member-comments__submit">Save</button>
+                        }
+                    </details>
+                }
+            </li>
+        }
+    </ul>
+
+    @if (Model.CanPost)
+    {
+        <div class="member-comments__new">
+            <h3 class="member-comments__subtitle">Add a comment</h3>
+            @using (Html.BeginUmbracoForm<CommentsSurfaceController>(nameof(CommentsSurfaceController.Create), FormMethod.Post))
+            {
+                <input type="hidden" name="@nameof(CreateCommentForm.ContentKey)" value="@Model.ContentKey" />
+                <label class="member-comments__label" for="new-comment-text">Comment</label>
+                <textarea id="new-comment-text" name="@nameof(CreateCommentForm.Text)" rows="4" maxlength="4000" required class="member-comments__textarea"></textarea>
+                <button type="submit" class="member-comments__submit">Post comment</button>
+            }
+        </div>
+    }
+</section>

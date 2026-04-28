@@ -2,9 +2,9 @@
 
 For client build steps and file watching, see [README.txt](README.txt).
 
-## Using the partial from this package in your templates
+## Page comments (members)
 
-The package ships a Razor partial view you can embed in any front-office template in your Umbraco site.
+The package adds a **member commenting** feature: comments are stored in the Umbraco database (EF Core), scoped to a content page (`ContentKey`), with optional **threaded replies** (`ParentId`). Only members who can access the page (public access rules) can post; edits are allowed for the **original author** or anyone in the **Comment moderators** member group (exact name).
 
 ### 1. Reference the package
 
@@ -12,16 +12,40 @@ Your Umbraco web project must reference **MemberComments** (project reference du
 
 The [MemberComments.TestSite](../MemberComments.TestSite/MemberComments.TestSite.csproj) sample uses a `ProjectReference` to this project.
 
-### 2. Include the partial in a view
+### 2. Moderator member group
 
-In any Razor view under `Views/` (for example `Views/Contact.cshtml` in the test site), add the partial tag helper where you want the markup to appear:
+In **Settings → Members → Member groups**, create a group named exactly:
+
+`Comment moderators`
+
+Assign members who should be allowed to edit **any** comment on the site.
+
+### 3. Include the comments partial in a template
+
+In any Razor view where `Model` is (or derives from) `IPublishedContent` for the page being viewed—for example `Views/ContentPage.cshtml` in the test site—add:
 
 ```cshtml
-<partial name="Partials/MemberCommentsTestOnly" />
+<partial name="Partials/MemberComments/Comments" model="Model" />
 ```
 
-You can place it inside a layout section, a `<section>`, a column, or any other markup; only the partial’s output is fixed.
+This renders the `MemberComments` view component (list, reply, edit forms) and posts to the surface controller shipped with the package.
 
-### 3. Rebuild and run
+### 4. Database schema (EF Core + package migration)
 
-After changing the plugin or adding the line above, rebuild the solution and run the site so the Razor Class Library’s compiled views are loaded.
+On install/upgrade, Umbraco runs the package migration plan **MemberComments**, which applies pending EF Core migrations for `membercomments_Comment`.
+
+To add a new EF migration during development (from the `src` folder, with `dotnet-ef` installed):
+
+```bash
+dotnet ef migrations add YourMigrationName --project MemberComments --startup-project MemberComments.TestSite --context MemberCommentsDbContext
+```
+
+The startup project must reference `Microsoft.EntityFrameworkCore.Design` (the test site already does for this solution).
+
+### 5. Rebuild and run
+
+After changing the package or templates, rebuild and run the site so the Razor Class Library views and migrations are picked up.
+
+## Legacy test partial
+
+The placeholder partial `Partials/MemberCommentsTestOnly` remains for packaging checks; use `Partials/MemberComments/Comments` for the real commenting UI.
