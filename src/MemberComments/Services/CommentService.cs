@@ -132,7 +132,6 @@ public sealed class CommentService : ICommentService
         string newText,
         CancellationToken cancellationToken = default)
     {
-        string subjectTrimmed = NormalizeSubject(newSubject);
         string sanitized = _htmlSanitizer.SanitizeForStorageAndDisplay(newText);
         if (CommentBodyHtmlSanitizer.IsVisuallyEmpty(sanitized))
         {
@@ -142,11 +141,6 @@ public sealed class CommentService : ICommentService
         if (sanitized.Length > MaxTextLength)
         {
             return CommentSaveResult.Fail($"Comment cannot exceed {MaxTextLength} characters.");
-        }
-
-        if (subjectTrimmed.Length > MaxSubjectLength)
-        {
-            return CommentSaveResult.Fail($"Subject cannot exceed {MaxSubjectLength} characters.");
         }
 
         Guid contentKey = page.Key;
@@ -187,7 +181,17 @@ public sealed class CommentService : ICommentService
                 entity.ModeratorId = moderatorMemberIntId;
             }
 
-            entity.Subject = subjectTrimmed;
+            if (entity.ParentId is null)
+            {
+                string subjectTrimmed = NormalizeSubject(newSubject);
+                if (subjectTrimmed.Length > MaxSubjectLength)
+                {
+                    return CommentSaveResult.Fail($"Subject cannot exceed {MaxSubjectLength} characters.");
+                }
+
+                entity.Subject = subjectTrimmed;
+            }
+
             entity.Text = sanitized;
             entity.EditedUtc = DateTimeOffset.UtcNow;
             await db.SaveChangesAsync(cancellationToken);

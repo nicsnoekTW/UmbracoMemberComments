@@ -65,8 +65,11 @@
                 {
                     <input type="hidden" name="@nameof(EditCommentForm.ContentKey)" value="@pageVm.ContentKey" />
                     <input type="hidden" name="@nameof(EditCommentForm.CommentId)" value="@c.Id" />
-                    <label class="member-comments__label" for="edit-subject-@c.Id">Subject <span class="member-comments__optional">(optional)</span></label>
-                    <input type="text" id="edit-subject-@c.Id" name="@nameof(EditCommentForm.Subject)" value="@c.Subject" maxlength="256" class="member-comments__input" autocomplete="off" />
+                    @if (c.ParentId is null)
+                    {
+                        <label class="member-comments__label" for="edit-subject-@c.Id">Subject <span class="member-comments__optional">(optional)</span></label>
+                        <input type="text" id="edit-subject-@c.Id" name="@nameof(EditCommentForm.Subject)" value="@c.Subject" maxlength="256" class="member-comments__input" autocomplete="off" />
+                    }
                     <label class="member-comments__label" for="edit-@c.Id">Edit comment</label>
                     <textarea id="edit-@c.Id" name="@nameof(EditCommentForm.Text)" rows="10" class="member-comments__textarea member-comments__richtext">@Html.Raw(c.Text)</textarea>
                     <button type="submit" class="member-comments__submit">Save changes</button>
