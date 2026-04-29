@@ -8,6 +8,18 @@
   opacity: 0.75;
 }
 
+.member-comments__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 0.6rem;
+}
+
+.member-comments__link {
+  font-size: 0.9em;
+  font-weight: normal;
+}
+
 .member-comments__subject {
   font-size: 1.1rem;
   font-weight: 600;
