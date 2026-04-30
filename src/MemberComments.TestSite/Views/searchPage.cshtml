@@ -83,6 +83,7 @@
             var searchResults = searcher.CreateQuery().ManagedQuery(query).Execute();
             results = searchResults
                 .Select(ToPublishedContent)
+                .Where(c => c.Content is not null)
                 .DistinctBy(c => c.Content?.Id)
                 .ToList();
         }
@@ -97,7 +98,6 @@
         x.Name.StartsWith("AG ", StringComparison.OrdinalIgnoreCase)
     ).ToList() ?? new List<IPublishedContent>();
 
-    // MKTZZ 24042026: Policy and National meetings under Australian Greens
     var homeChildren = home?.Children()?.Where(x =>
         x.IsVisible() &&
         !excluded.Any(e => x.ContentType.Alias.ToLower().Contains(e)) &&
@@ -109,10 +109,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Search — Greenhouse</title>
-    <link rel="stylesheet" href="/css/greenhouse.css" />
+    <title>Search</title>
     <style>
-        :root { --green: #007236; --dark: #1A3A1B; --bg: #f0f2f0; --border: #e8ece8; --accent: #EAF3DE; }
+        :root { --green: #e7afa3; --dark: #1A3A1B; --bg: #f0f2f0; --border: #e8ece8; --accent: #EAF3DE; }
         body { font-family: system-ui, sans-serif; background: var(--bg); display: flex; margin: 0; min-height: 100vh; }
         .sidebar { width: 300px; background: #f7f9f7; border-right: 1px solid var(--border); padding: 24px 16px; height: 100vh; position: sticky; top: 0; overflow-y: auto; box-sizing: border-box; }
         .sidebar-logo { color: var(--green); text-decoration: none; font-size: 24px; font-weight: 800; display: block; margin-bottom: 24px; padding-left: 8px; }
@@ -134,15 +133,11 @@
 </head>
 <body>
 
-@* Search page has its own inline sidebar — does not use LeftSideBar.cshtml partial
-   MKTZZ 24042026: fixed portals filter (case-insensitive), fixed /my-membership URL,
-   Search only appears in Quick Links not Local Portals *@
 <aside class="sidebar">
-    <a href="/" class="sidebar-logo">Greenhouse</a>
+    <a href="/" class="sidebar-logo">Home</a>
 
     <span class="nav-label">National</span>
-    <a href="/" class="nav-item">Australian Greens</a>
-    @* MKTZZ 24042026: Policy and National meetings as children of Australian Greens *@
+    <a href="/" class="nav-item">Home</a>
     @if (homeChildren.Any()) {
         <div class="sub-nav" style="margin-left:20px; border-left:2px solid #e8ece8; padding-left:4px; margin-bottom:4px;">
             @foreach (var child in homeChildren) {
@@ -160,13 +155,11 @@
 
     <span class="nav-label">Quick Links</span>
     <a href="/search" class="nav-item active">Search</a>
-    @* MKTZZ 24042026: fixed /my-membership → /my-greens-membership/ *@
-    <a href="/my-greens-membership/" class="nav-item">My membership!</a>
 </aside>
 
 <main class="main">
     <div class="search-card">
-        <h1 style="margin-top:0;">🔍 Search Greenhouse</h1>
+        <h1 style="margin-top:0;">🔍 Search</h1>
         <form action="/search" method="GET">
             <input type="text" name="query" class="search-field" placeholder="Search..." value="@query">
             <button type="submit" class="search-btn">Run Search</button>
@@ -199,7 +192,7 @@
                         if (canAccess) {
                             <div class="result-item">
                                 <div class="meta-text">Portal: @GetPortalName(result)</div>
-                                <a href="@result.Url()@(indexType == "comment" ? "#member-comments-heading": "")" style="font-weight:700; color:var(--green); text-decoration:none; font-size:20px;">@GetTitle(result)</a>
+                                <a href="@result.Url()@(indexType == "comment" ? "#member-comments-heading": "")" style="font-weight:700; text-decoration:none; font-size:20px;">@GetTitle(result)</a>
                                 <div class="found-in">Found in <strong>@indexType</strong></div>
                             </div>
                         }
