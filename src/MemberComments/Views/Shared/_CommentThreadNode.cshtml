@@ -14,17 +14,20 @@
         <strong class="member-comments__author">@c.AuthorName</strong>
         @if (c.IsDeleted && c.DeletedUtc.HasValue)
         {
-            <time datetime="@c.DeletedUtc.Value.ToString("o")" class="member-comments__time">Deleted at @TimeZoneInfo.ConvertTime(c.DeletedUtc.Value.LocalDateTime, tz).ToString("yyyy-MM-dd h:mm:ss tt")</time>
+            <time datetime="@c.DeletedUtc.Value.ToString("o")" class="member-comments__time">@(c.IsDeletedByModerator ? "Deleted by a moderator at " : "Deleted at ")@TimeZoneInfo.ConvertTime(c.DeletedUtc.Value.LocalDateTime, tz).ToString("yyyy-MM-dd h:mm:ss tt")</time>
         }
         else if (c.EditedUtc.HasValue)
         {
-            <time datetime="@c.EditedUtc.Value.ToString("o")" class="member-comments__time">@(c.IsModeratorAttributedEdit ? "Edited by moderator at " : "Edited at ")@TimeZoneInfo.ConvertTime(c.EditedUtc.Value.LocalDateTime, tz).ToString("yyyy-MM-dd h:mm:ss tt")</time>
+            <time datetime="@c.EditedUtc.Value.ToString("o")" class="member-comments__time">@(c.IsModeratorAttributedEdit ? "Edited by a moderator at " : "Edited at ")@TimeZoneInfo.ConvertTime(c.EditedUtc.Value.LocalDateTime, tz).ToString("yyyy-MM-dd h:mm:ss tt")</time>
         }
         else
         {
             <time datetime="@c.CreatedUtc.ToString("o")" class="member-comments__time">@TimeZoneInfo.ConvertTime(c.CreatedUtc.LocalDateTime, tz).ToString("yyyy-MM-dd h:mm:ss tt")</time>
         }
-        <a href="#comment-@c.Id" class="member-comments__link">Link</a>
+        @if (c.IsDeleted is false)
+        {
+            <a href="#comment-@c.Id" class="member-comments__link">Link</a>
+        }
     </div>
     @if (c.IsDeleted is false && string.IsNullOrEmpty(c.Subject) is false)
     {
