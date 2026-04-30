@@ -6,6 +6,7 @@
 @using Umbraco.Cms.Core.Models.PublishedContent
 @using Umbraco.Cms.Core.Security
 @using Umbraco.Extensions
+@using System.Text.Json
 @using Examine
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
 @inject IExamineManager _examineManager
@@ -66,17 +67,23 @@
         return _publicAccessService.HasAccess(id, _contentService, memberUsername, memberRoles);
     }
 
+    (string IndexType, IPublishedContent Content) ToPublishedContent(ISearchResult hit) {
+        var content = umbracoHelper.Content(hit.Id);
+        if (content is not null) {
+            return (hit["__IndexType"], content);
+        }
+        return (hit["__IndexType"], (IPublishedContent)umbracoHelper.Media(hit.Id));
+    }
+
     // --- 2. SEARCH EXECUTION ---
-    var results = new List<IPublishedContent>();
+    var results = new List<(string IndexType, IPublishedContent Content)>();
     if (!string.IsNullOrWhiteSpace(query)) {
         if (_examineManager.TryGetSearcher("MultiSearcher", out ISearcher? searcher))
         {
             var searchResults = searcher.CreateQuery().ManagedQuery(query).Execute();
             results = searchResults
-                .Select(hit => umbracoHelper.Content(hit.Id) ?? (IPublishedContent?)umbracoHelper.Media(hit.Id))
-                .Where(c => c is not null)
-                .Cast<IPublishedContent>()
-                .DistinctBy(c => c.Id)
+                .Select(ToPublishedContent)
+                .DistinctBy(c => c.Content?.Id)
                 .ToList();
         }
     }
@@ -170,7 +177,7 @@
                 @if (!results.Any()) {
                     <p style="color:#999; font-style:italic;">No results found for "@query".</p>
                 }
-                @foreach (var result in results) {
+                @foreach (var (indexType, result) in results) {
                     bool isMedia = result.ItemType == PublishedItemType.Media;
                     if (isMedia) {
                         var relations = _relationService.GetByChildId(result.Id);
@@ -187,16 +194,13 @@
                                 }
                             }
                         }
-                    } if (result.Value<string>("__NodeTypeAlias") == "comment") {
-                       <div class="result-item">
-                            A Comment
-                       </div>
                     } else {
                         var canAccess = HasAccess(result.Id);
                         if (canAccess) {
                             <div class="result-item">
                                 <div class="meta-text">Portal: @GetPortalName(result)</div>
-                                <a href="@result.Url()" style="font-weight:700; color:var(--green); text-decoration:none; font-size:20px;">@GetTitle(result)</a>
+                                <a href="@result.Url()@(indexType == "comment" ? "#member-comments-heading": "")" style="font-weight:700; color:var(--green); text-decoration:none; font-size:20px;">@GetTitle(result)</a>
+                                <div class="found-in">Found in <strong>@indexType</strong></div>
                             </div>
                         }
                     }
