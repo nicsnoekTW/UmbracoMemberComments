@@ -1,4 +1,5 @@
 # Member Comments 
+Note this package was created for a POC by heavily using AI. Not production grade in any way.
 
 [![Downloads](https://img.shields.io/nuget/dt/Umbraco.Community.MemberComments?color=cc9900)](https://www.nuget.org/packages/Umbraco.Community.MemberComments/)
 [![NuGet](https://img.shields.io/nuget/vpre/Umbraco.Community.MemberComments?color=0273B3)](https://www.nuget.org/packages/Umbraco.Community.MemberComments)
