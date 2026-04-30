@@ -4,8 +4,8 @@ namespace MemberComments.Models;
 
 public sealed class EditCommentForm
 {
-    [Required]
-    public Guid ContentKey { get; set; }
+    [Range(1, int.MaxValue)]
+    public int ContentId { get; set; }
 
     [Required]
     public int CommentId { get; set; }

@@ -24,7 +24,7 @@ public sealed class MemberCommentsDbContext : DbContext
             entity.Property(e => e.Subject).HasMaxLength(256).IsRequired();
             entity.Property(e => e.Text).HasMaxLength(100_000).IsRequired();
 
-            entity.HasIndex(e => e.ContentKey);
+            entity.HasIndex(e => e.ContentId);
             entity.HasIndex(e => e.ParentId);
 
             entity

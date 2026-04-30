@@ -12,7 +12,8 @@ public sealed class Comment
 
     public ICollection<Comment> Replies { get; set; } = new List<Comment>();
 
-    public Guid ContentKey { get; set; }
+    /// <summary>Umbraco published content node id (same as <c>IPublishedContent.Id</c>).</summary>
+    public int ContentId { get; set; }
 
     public Guid MemberKey { get; set; }
 

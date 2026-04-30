@@ -45,7 +45,7 @@
             <summary>Reply</summary>
             @using (Html.BeginUmbracoForm<CommentsSurfaceController>(nameof(CommentsSurfaceController.Create), FormMethod.Post))
             {
-                <input type="hidden" name="@nameof(CreateCommentForm.ContentKey)" value="@pageVm.ContentKey" />
+                <input type="hidden" name="@nameof(CreateCommentForm.ContentId)" value="@pageVm.ContentId" />
                 <input type="hidden" name="@nameof(CreateCommentForm.ParentId)" value="@c.Id" />
                 <label class="member-comments__label" for="reply-@c.Id">Your reply</label>
                 <textarea id="reply-@c.Id" name="@nameof(CreateCommentForm.Text)" rows="10" class="member-comments__textarea member-comments__richtext"></textarea>
@@ -64,7 +64,7 @@
             <div class="member-comments__edit-actions">
                 @using (Html.BeginUmbracoForm<CommentsSurfaceController>(nameof(CommentsSurfaceController.Edit), FormMethod.Post))
                 {
-                    <input type="hidden" name="@nameof(EditCommentForm.ContentKey)" value="@pageVm.ContentKey" />
+                    <input type="hidden" name="@nameof(EditCommentForm.ContentId)" value="@pageVm.ContentId" />
                     <input type="hidden" name="@nameof(EditCommentForm.CommentId)" value="@c.Id" />
                     @if (c.ParentId is null)
                     {
@@ -77,7 +77,7 @@
                 }
                 @using (Html.BeginUmbracoForm<CommentsSurfaceController>(nameof(CommentsSurfaceController.Delete), FormMethod.Post))
                 {
-                    <input type="hidden" name="@nameof(DeleteCommentForm.ContentKey)" value="@pageVm.ContentKey" />
+                    <input type="hidden" name="@nameof(DeleteCommentForm.ContentId)" value="@pageVm.ContentId" />
                     <input type="hidden" name="@nameof(DeleteCommentForm.CommentId)" value="@c.Id" />
                     <button type="submit" class="member-comments__submit member-comments__submit--delete" onclick="return confirm('Delete this comment?');">Delete</button>
                 }

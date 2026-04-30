@@ -15,5 +15,6 @@ public sealed class MemberCommentsPackageMigrationPlan : PackageMigrationPlan
         To<ApplyMemberCommentsEfMigrations>("membercomments-ef-initial");
         To<ApplyMemberCommentsEfMigrations>("membercomments-ef-softdelete-moderator");
         To<ApplyMemberCommentsEfMigrations>("membercomments-ef-subject-richtext");
+        To<ApplyMemberCommentsEfMigrations>("membercomments-ef-content-id");
     }
 }

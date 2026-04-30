@@ -6,7 +6,7 @@ public interface ICommentService
 {
     /// <summary>Returns comments for public rendering. Soft-deleted rows use placeholder <see cref="CommentViewModel.Text"/>; original bodies are only in the database.</summary>
     Task<IReadOnlyList<CommentViewModel>> GetCommentsForContentAsync(
-        Guid contentKey,
+        int contentId,
         CancellationToken cancellationToken = default);
 
     Task<CommentSaveResult> TryCreateAsync(

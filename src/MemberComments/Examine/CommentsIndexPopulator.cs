@@ -8,7 +8,7 @@ using Umbraco.Cms.Persistence.EFCore.Scoping;
 
 namespace MemberComments.Examine;
 
-/// <summary>Rebuilds <see cref="CommentsIndex"/> from all non-deleted comments.</summary>
+/// <summary>Rebuilds <see cref="CommentsIndex"/> from all non-deleted comments (one document per content node).</summary>
 public sealed class CommentsIndexPopulator : IIndexPopulator
 {
     private readonly IEFCoreScopeProvider<MemberCommentsDbContext> _efCoreScopeProvider;
@@ -31,28 +31,23 @@ public sealed class CommentsIndexPopulator : IIndexPopulator
     {
         foreach (IIndex index in indexes.Where(IsRegistered))
         {
-            int lastId = 0;
-            const int batchSize = 1000;
+            using IEfCoreScope<MemberCommentsDbContext> scope = _efCoreScopeProvider.CreateScope();
+            List<Comment> all = scope.ExecuteWithContextAsync(async db =>
+                await db.Comments
+                    .AsNoTracking()
+                    .Where(c => c.DeletedUtc == null)
+                    .OrderBy(c => c.ContentId)
+                    .ThenBy(c => c.Id)
+                    .ToListAsync(CancellationToken.None)).GetAwaiter().GetResult();
+            scope.Complete();
 
-            while (true)
+            foreach (IGrouping<int, Comment> group in all.GroupBy(c => c.ContentId))
             {
-                using IEfCoreScope<MemberCommentsDbContext> scope = _efCoreScopeProvider.CreateScope();
-                List<Comment> batch = scope.ExecuteWithContextAsync(async db =>
-                    await db.Comments
-                        .AsNoTracking()
-                        .Where(c => c.DeletedUtc == null && c.Id > lastId)
-                        .OrderBy(c => c.Id)
-                        .Take(batchSize)
-                        .ToListAsync(CancellationToken.None)).GetAwaiter().GetResult();
-                scope.Complete();
-
-                if (batch.Count == 0)
+                ValueSet? valueSet = _valueSetBuilder.GetValueSetForContent(group.Key, group.ToList());
+                if (valueSet is not null)
                 {
-                    break;
+                    index.IndexItems(new[] { valueSet });
                 }
-
-                index.IndexItems(_valueSetBuilder.GetValueSets(batch.ToArray()));
-                lastId = batch[^1].Id;
             }
         }
     }

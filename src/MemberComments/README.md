@@ -4,7 +4,7 @@ For client build steps and file watching, see [README.txt](README.txt).
 
 ## Page comments (members)
 
-The package adds a **member commenting** feature: comments are stored in the Umbraco database (EF Core), scoped to a content page (`ContentKey`), with **nested replies** under the parent comment (`ParentId`). Only members who can access the page (public access rules) can post; **edit** and **soft delete** are allowed for the **original author** or anyone in the **Comment moderators** member group (exact name).
+The package adds a **member commenting** feature: comments are stored in the Umbraco database (EF Core), scoped to a content page (`ContentId`, the published content node id), with **nested replies** under the parent comment (`ParentId`). Only members who can access the page (public access rules) can post; **edit** and **soft delete** are allowed for the **original author** or anyone in the **Comment moderators** member group (exact name).
 
 **Soft delete** sets `DeletedUtc`; the UI shows **`[comment deleted]`** when the author removed it, or **`[comment deleted by moderator]`** when a moderator removed someone else’s comment, plus a **Deleted at …** timestamp (original body remains in the database). **Replies** to a deleted comment are blocked.
 

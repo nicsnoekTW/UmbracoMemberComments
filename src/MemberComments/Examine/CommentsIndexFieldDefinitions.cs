@@ -7,8 +7,7 @@ internal static class CommentsIndexFieldDefinitions
 {
     public static FieldDefinitionCollection Create() =>
         new FieldDefinitionCollection(
-            new FieldDefinition(CommentsIndexConstants.FieldCommentId, FieldDefinitionTypes.Integer),
-            new FieldDefinition(CommentsIndexConstants.FieldContentKey, FieldDefinitionTypes.InvariantCultureIgnoreCase),
+            new FieldDefinition(CommentsIndexConstants.FieldNodeId, FieldDefinitionTypes.Integer),
             new FieldDefinition(CommentsIndexConstants.FieldSubject, FieldDefinitionTypes.FullText),
             new FieldDefinition(CommentsIndexConstants.FieldAuthorName, FieldDefinitionTypes.FullText),
             new FieldDefinition(CommentsIndexConstants.FieldText, FieldDefinitionTypes.FullText));

@@ -30,7 +30,7 @@
             <h3 class="member-comments__subtitle">Add a comment</h3>
             @using (Html.BeginUmbracoForm<CommentsSurfaceController>(nameof(CommentsSurfaceController.Create), FormMethod.Post))
             {
-                <input type="hidden" name="@nameof(CreateCommentForm.ContentKey)" value="@Model.ContentKey" />
+                <input type="hidden" name="@nameof(CreateCommentForm.ContentId)" value="@Model.ContentId" />
                 <label class="member-comments__label" for="new-comment-subject">Subject <span class="member-comments__optional">(optional)</span></label>
                 <input type="text" id="new-comment-subject" name="@nameof(CreateCommentForm.Subject)" maxlength="256" class="member-comments__input" autocomplete="off" />
                 <label class="member-comments__label" for="new-comment-text">Comment</label>

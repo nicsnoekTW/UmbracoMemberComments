@@ -1,2 +1,2 @@
 @inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<Umbraco.Cms.Core.Models.PublishedContent.IPublishedContent>
-@await Component.InvokeAsync("MemberComments", new { contentKey = Model.Key })
+@await Component.InvokeAsync("MemberComments", new { contentId = Model.Id })

@@ -2,7 +2,7 @@ namespace MemberComments.ViewModels;
 
 public sealed class MemberCommentsViewModel
 {
-    public Guid ContentKey { get; init; }
+    public int ContentId { get; init; }
 
     public IReadOnlyList<CommentThreadNode> RootThreads { get; init; } = Array.Empty<CommentThreadNode>();
 

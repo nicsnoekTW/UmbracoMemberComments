@@ -27,7 +27,7 @@ public sealed class CommentService : ICommentService
 
     /// <inheritdoc />
     public async Task<IReadOnlyList<CommentViewModel>> GetCommentsForContentAsync(
-        Guid contentKey,
+        int contentId,
         CancellationToken cancellationToken = default)
     {
         using IEfCoreScope<MemberCommentsDbContext> scope = _efCoreScopeProvider.CreateScope();
@@ -35,7 +35,7 @@ public sealed class CommentService : ICommentService
         {
             List<Comment> list = await db.Comments
                 .AsNoTracking()
-                .Where(c => c.ContentKey == contentKey)
+                .Where(c => c.ContentId == contentId)
                 .OrderBy(c => c.Id)
                 .ToListAsync(cancellationToken);
 
@@ -81,16 +81,15 @@ public sealed class CommentService : ICommentService
             return CommentSaveResult.Fail("Author name is required.");
         }
 
-        Guid contentKey = page.Key;
+        int contentId = page.Id;
 
         using IEfCoreScope<MemberCommentsDbContext> scope = _efCoreScopeProvider.CreateScope();
-        int? newCommentId = null;
         CommentSaveResult result = await scope.ExecuteWithContextAsync(async db =>
         {
             if (parentId is int pid)
             {
                 Comment? parent = await db.Comments.FirstOrDefaultAsync(
-                    c => c.Id == pid && c.ContentKey == contentKey,
+                    c => c.Id == pid && c.ContentId == contentId,
                     cancellationToken);
                 if (parent is null)
                 {
@@ -105,7 +104,7 @@ public sealed class CommentService : ICommentService
 
             var entity = new Comment
             {
-                ContentKey = contentKey,
+                ContentId = contentId,
                 ParentId = parentId,
                 MemberKey = memberKey,
                 AuthorName = authorName.Trim(),
@@ -119,14 +118,13 @@ public sealed class CommentService : ICommentService
 
             db.Comments.Add(entity);
             await db.SaveChangesAsync(cancellationToken);
-            newCommentId = entity.Id;
             return CommentSaveResult.Ok();
         });
 
         scope.Complete();
-        if (result.Success && newCommentId.HasValue)
+        if (result.Success)
         {
-            await _commentsExamineIndexer.UpsertAsync(newCommentId.Value, cancellationToken);
+            await _commentsExamineIndexer.ReindexForContentAsync(contentId, cancellationToken);
         }
 
         return result;
@@ -154,13 +152,13 @@ public sealed class CommentService : ICommentService
             return CommentSaveResult.Fail($"Comment cannot exceed {MaxTextLength} characters.");
         }
 
-        Guid contentKey = page.Key;
+        int contentId = page.Id;
 
         using IEfCoreScope<MemberCommentsDbContext> scope = _efCoreScopeProvider.CreateScope();
         CommentSaveResult result = await scope.ExecuteWithContextAsync(async db =>
         {
             Comment? entity = await db.Comments.FirstOrDefaultAsync(
-                c => c.Id == commentId && c.ContentKey == contentKey,
+                c => c.Id == commentId && c.ContentId == contentId,
                 cancellationToken);
 
             if (entity is null)
@@ -212,7 +210,7 @@ public sealed class CommentService : ICommentService
         scope.Complete();
         if (result.Success)
         {
-            await _commentsExamineIndexer.UpsertAsync(commentId, cancellationToken);
+            await _commentsExamineIndexer.ReindexForContentAsync(contentId, cancellationToken);
         }
 
         return result;
@@ -227,13 +225,13 @@ public sealed class CommentService : ICommentService
         int? moderatorMemberIntId,
         CancellationToken cancellationToken = default)
     {
-        Guid contentKey = page.Key;
+        int contentId = page.Id;
 
         using IEfCoreScope<MemberCommentsDbContext> scope = _efCoreScopeProvider.CreateScope();
         CommentSaveResult result = await scope.ExecuteWithContextAsync(async db =>
         {
             Comment? entity = await db.Comments.FirstOrDefaultAsync(
-                c => c.Id == commentId && c.ContentKey == contentKey,
+                c => c.Id == commentId && c.ContentId == contentId,
                 cancellationToken);
 
             if (entity is null)
@@ -274,7 +272,7 @@ public sealed class CommentService : ICommentService
         scope.Complete();
         if (result.Success)
         {
-            await _commentsExamineIndexer.DeleteAsync(commentId, cancellationToken);
+            await _commentsExamineIndexer.ReindexForContentAsync(contentId, cancellationToken);
         }
 
         return result;

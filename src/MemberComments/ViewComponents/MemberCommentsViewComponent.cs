@@ -26,18 +26,18 @@ public sealed class MemberCommentsViewComponent : ViewComponent
         _umbracoContextAccessor = umbracoContextAccessor;
     }
 
-    public async Task<IViewComponentResult> InvokeAsync(Guid contentKey)
+    public async Task<IViewComponentResult> InvokeAsync(int contentId)
     {
-        IPublishedContent? page = _umbracoContextAccessor.GetRequiredUmbracoContext().Content?.GetById(contentKey);
+        IPublishedContent? page = _umbracoContextAccessor.GetRequiredUmbracoContext().Content?.GetById(contentId);
         if (page is null)
         {
-            return View(new MemberCommentsViewModel { ContentKey = contentKey, CanView = false });
+            return View(new MemberCommentsViewModel { ContentId = contentId, CanView = false });
         }
 
         bool canView = await _memberManager.MemberHasAccessAsync(page.Path);
         if (canView is false)
         {
-            return View(new MemberCommentsViewModel { ContentKey = contentKey, CanView = false });
+            return View(new MemberCommentsViewModel { ContentId = contentId, CanView = false });
         }
 
         MemberIdentityUser? member = await _memberManager.GetCurrentMemberAsync();
@@ -46,14 +46,14 @@ public sealed class MemberCommentsViewComponent : ViewComponent
         bool isModerator = member is not null &&
             await _memberManager.IsMemberAuthorizedAsync(allowGroups: new[] { Constants.CommentModeratorsGroupName });
 
-        IReadOnlyList<CommentViewModel> comments = await _commentService.GetCommentsForContentAsync(contentKey);
+        IReadOnlyList<CommentViewModel> comments = await _commentService.GetCommentsForContentAsync(contentId);
         IReadOnlyList<CommentThreadNode> roots = BuildThreadTree(comments);
 
         string? error = ViewContext.TempData?["MemberCommentsError"] as string;
 
         return View(new MemberCommentsViewModel
         {
-            ContentKey = contentKey,
+            ContentId = contentId,
             RootThreads = roots,
             CanView = true,
             CanPost = canPost,

@@ -48,7 +48,7 @@ public sealed class CommentsSurfaceController : SurfaceController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create([Bind(Prefix = "")] CreateCommentForm model, CancellationToken cancellationToken)
     {
-        IPublishedContent? page = ResolvePage(model.ContentKey);
+        IPublishedContent? page = ResolvePage(model.ContentId);
         if (page is null)
         {
             return NotFound();
@@ -93,7 +93,7 @@ public sealed class CommentsSurfaceController : SurfaceController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit([Bind(Prefix = "")] EditCommentForm model, CancellationToken cancellationToken)
     {
-        IPublishedContent? page = ResolvePage(model.ContentKey);
+        IPublishedContent? page = ResolvePage(model.ContentId);
         if (page is null)
         {
             return NotFound();
@@ -143,7 +143,7 @@ public sealed class CommentsSurfaceController : SurfaceController
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete([Bind(Prefix = "")] DeleteCommentForm model, CancellationToken cancellationToken)
     {
-        IPublishedContent? page = ResolvePage(model.ContentKey);
+        IPublishedContent? page = ResolvePage(model.ContentId);
         if (page is null)
         {
             return NotFound();
@@ -192,6 +192,6 @@ public sealed class CommentsSurfaceController : SurfaceController
         return members.FirstOrDefault()?.Id;
     }
 
-    private IPublishedContent? ResolvePage(Guid contentKey) =>
-        _umbracoContextAccessor.GetRequiredUmbracoContext().Content?.GetById(contentKey);
+    private IPublishedContent? ResolvePage(int contentId) =>
+        _umbracoContextAccessor.GetRequiredUmbracoContext().Content?.GetById(contentId);
 }
