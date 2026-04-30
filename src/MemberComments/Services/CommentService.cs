@@ -1,5 +1,6 @@
 using MemberComments.Data;
 using MemberComments.Data.Entities;
+using MemberComments.Examine;
 using Microsoft.EntityFrameworkCore;
 using Umbraco.Cms.Core.Models.PublishedContent;
 using Umbraco.Cms.Persistence.EFCore.Scoping;
@@ -12,13 +13,16 @@ public sealed class CommentService : ICommentService
     private const int MaxTextLength = 100_000;
     private readonly IEFCoreScopeProvider<MemberCommentsDbContext> _efCoreScopeProvider;
     private readonly ICommentBodyHtmlSanitizer _htmlSanitizer;
+    private readonly ICommentsExamineIndexer _commentsExamineIndexer;
 
     public CommentService(
         IEFCoreScopeProvider<MemberCommentsDbContext> efCoreScopeProvider,
-        ICommentBodyHtmlSanitizer htmlSanitizer)
+        ICommentBodyHtmlSanitizer htmlSanitizer,
+        ICommentsExamineIndexer commentsExamineIndexer)
     {
         _efCoreScopeProvider = efCoreScopeProvider;
         _htmlSanitizer = htmlSanitizer;
+        _commentsExamineIndexer = commentsExamineIndexer;
     }
 
     /// <inheritdoc />
@@ -80,6 +84,7 @@ public sealed class CommentService : ICommentService
         Guid contentKey = page.Key;
 
         using IEfCoreScope<MemberCommentsDbContext> scope = _efCoreScopeProvider.CreateScope();
+        int? newCommentId = null;
         CommentSaveResult result = await scope.ExecuteWithContextAsync(async db =>
         {
             if (parentId is int pid)
@@ -114,10 +119,16 @@ public sealed class CommentService : ICommentService
 
             db.Comments.Add(entity);
             await db.SaveChangesAsync(cancellationToken);
+            newCommentId = entity.Id;
             return CommentSaveResult.Ok();
         });
 
         scope.Complete();
+        if (result.Success && newCommentId.HasValue)
+        {
+            await _commentsExamineIndexer.UpsertAsync(newCommentId.Value, cancellationToken);
+        }
+
         return result;
     }
 
@@ -199,6 +210,11 @@ public sealed class CommentService : ICommentService
         });
 
         scope.Complete();
+        if (result.Success)
+        {
+            await _commentsExamineIndexer.UpsertAsync(commentId, cancellationToken);
+        }
+
         return result;
     }
 
@@ -256,6 +272,11 @@ public sealed class CommentService : ICommentService
         });
 
         scope.Complete();
+        if (result.Success)
+        {
+            await _commentsExamineIndexer.DeleteAsync(commentId, cancellationToken);
+        }
+
         return result;
     }
 

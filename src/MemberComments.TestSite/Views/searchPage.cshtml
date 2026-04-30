@@ -1,0 +1,210 @@
+﻿@using Examine.Search
+@using Umbraco.Cms.Core.Services
+@using Umbraco.Cms.Core.Web
+@using Umbraco.Cms.Web.Common
+@using Umbraco.Cms.Web.Common.PublishedModels;
+@using Umbraco.Cms.Core.Models.PublishedContent
+@using Umbraco.Cms.Core.Security
+@using Umbraco.Extensions
+@using Examine
+@inherits Umbraco.Cms.Web.Common.Views.UmbracoViewPage<IPublishedContent>
+@inject IExamineManager _examineManager
+@inject IUmbracoHelperAccessor _umbracoHelperAccessor
+@inject IRelationService _relationService
+@inject IMemberManager _memberManager
+@inject IPublicAccessService _publicAccessService
+@inject IContentService _contentService
+
+@{
+    Layout = null;
+    var query = Context.Request.Query["query"].ToString() ?? "";
+    var home = Model.Root();
+
+    if (!_umbracoHelperAccessor.TryGetUmbracoHelper(out var umbracoHelper))
+    {
+        throw new Exception("Umbraco helper not found");
+    }
+
+    string? memberUsername = null;
+    IEnumerable<string> memberRoles = Array.Empty<string>();
+    if (_memberManager.IsLoggedIn())
+    {
+        var member = await _memberManager.GetCurrentMemberAsync();
+        if (member?.UserName is { Length: > 0 } un)
+        {
+            memberUsername = un;
+            memberRoles = await _memberManager.GetRolesAsync(member);
+        }
+    }
+
+    // --- 1. HELPERS ---
+    string GetTitle(IPublishedContent content) {
+        if (content == null) return "";
+        var title = content.Value<string>("pageTitle") ?? content.Value<string>("meetingTitle");
+        return !string.IsNullOrWhiteSpace(title) ? title : content.Name;
+    }
+
+    string GetPortalName(IPublishedContent content) {
+        if (content == null) return "National";
+        var portal = content.AncestorsOrSelf().FirstOrDefault(x => x.Level == 2);
+        return portal != null ? GetTitle(portal) : "National";
+    }
+
+    string GetPropertyLabel(IPublishedContent page, Guid mediaKey) {
+        if (page == null) return "attachment";
+        foreach (var prop in page.Properties) {
+            var val = prop.GetValue();
+            bool matches = (val is IPublishedContent m && m.Key == mediaKey) ||
+                           (val is IEnumerable<IPublishedContent> ms && ms.Any(x => x != null && x.Key == mediaKey));
+            if (matches) return prop.Alias;
+        }
+        return "attachment";
+    }
+
+    bool HasAccess(int id) {
+        if (memberUsername == null) return false;
+        return _publicAccessService.HasAccess(id, _contentService, memberUsername, memberRoles);
+    }
+
+    // --- 2. SEARCH EXECUTION ---
+    var results = new List<IPublishedContent>();
+    if (!string.IsNullOrWhiteSpace(query)) {
+        if (_examineManager.TryGetSearcher("MultiSearcher", out ISearcher? searcher))
+        {
+            var searchResults = searcher.CreateQuery().ManagedQuery(query).Execute();
+            results = searchResults
+                .Select(hit => umbracoHelper.Content(hit.Id) ?? (IPublishedContent?)umbracoHelper.Media(hit.Id))
+                .Where(c => c is not null)
+                .Cast<IPublishedContent>()
+                .DistinctBy(c => c.Id)
+                .ToList();
+        }
+    }
+
+    // MKTZZ 24042026: case-insensitive exclusion — fixes Search/Policy/National meetings
+    // appearing in Local Portals. Uses .ToLower().Contains() not exact match.
+    var excluded = new[] { "search", "login", "accesserror", "membership" };
+    var portals = home?.Children()?.Where(x =>
+        x.IsVisible() &&
+        !excluded.Any(e => x.ContentType.Alias.ToLower().Contains(e)) &&
+        x.Name.StartsWith("AG ", StringComparison.OrdinalIgnoreCase)
+    ).ToList() ?? new List<IPublishedContent>();
+
+    // MKTZZ 24042026: Policy and National meetings under Australian Greens
+    var homeChildren = home?.Children()?.Where(x =>
+        x.IsVisible() &&
+        !excluded.Any(e => x.ContentType.Alias.ToLower().Contains(e)) &&
+        !x.Name.StartsWith("AG ", StringComparison.OrdinalIgnoreCase)
+    ).ToList() ?? new List<IPublishedContent>();
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search — Greenhouse</title>
+    <link rel="stylesheet" href="/css/greenhouse.css" />
+    <style>
+        :root { --green: #007236; --dark: #1A3A1B; --bg: #f0f2f0; --border: #e8ece8; --accent: #EAF3DE; }
+        body { font-family: system-ui, sans-serif; background: var(--bg); display: flex; margin: 0; min-height: 100vh; }
+        .sidebar { width: 300px; background: #f7f9f7; border-right: 1px solid var(--border); padding: 24px 16px; height: 100vh; position: sticky; top: 0; overflow-y: auto; box-sizing: border-box; }
+        .sidebar-logo { color: var(--green); text-decoration: none; font-size: 24px; font-weight: 800; display: block; margin-bottom: 24px; padding-left: 8px; }
+        .nav-label { font-size: 11px; font-weight: 700; color: #999; text-transform: uppercase; margin: 24px 8px 8px; display: block; }
+        .nav-item { display: block; padding: 12px; color: #333; text-decoration: none; border-radius: 8px; font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .nav-item:hover { background: #eee; }
+        .nav-item.active { background: var(--accent); color: var(--dark); font-weight: 700; }
+        .main { flex: 1; padding: 40px; }
+        .search-card { background: #fff; max-width: 900px; border-radius: 12px; padding: 40px; box-shadow: 0 4px 25px rgba(0,0,0,.06); }
+        .search-field { width: 100%; padding: 16px; border: 2px solid var(--border); border-radius: 10px; font-size: 18px; margin-bottom: 20px; outline: none; box-sizing: border-box; }
+        .search-field:focus { border-color: var(--green); }
+        .search-btn { background: var(--green); color: #fff; border: none; padding: 14px 40px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 1rem; width: auto; } /* MKTZZ 24042026: width:auto overrides greenhouse.css form button{width:100%} */
+        .search-btn:hover { background: var(--dark); }
+        .result-item { padding: 25px 0; border-bottom: 1px solid #eee; }
+        .meta-text { font-size: 12px; color: #888; margin-bottom: 4px; font-weight: 700; text-transform: uppercase; }
+        .found-in { font-size: 13px; color: #666; margin-top: 5px; }
+        .found-in strong { color: var(--dark); }
+    </style>
+</head>
+<body>
+
+@* Search page has its own inline sidebar — does not use LeftSideBar.cshtml partial
+   MKTZZ 24042026: fixed portals filter (case-insensitive), fixed /my-membership URL,
+   Search only appears in Quick Links not Local Portals *@
+<aside class="sidebar">
+    <a href="/" class="sidebar-logo">Greenhouse</a>
+
+    <span class="nav-label">National</span>
+    <a href="/" class="nav-item">Australian Greens</a>
+    @* MKTZZ 24042026: Policy and National meetings as children of Australian Greens *@
+    @if (homeChildren.Any()) {
+        <div class="sub-nav" style="margin-left:20px; border-left:2px solid #e8ece8; padding-left:4px; margin-bottom:4px;">
+            @foreach (var child in homeChildren) {
+                <a href="@child.Url()" class="nav-item" style="padding:8px 12px; font-size:14px; font-weight:500;">@GetTitle(child)</a>
+            }
+        </div>
+    }
+
+    @if (portals.Any()) {
+        <span class="nav-label">Local Portals</span>
+        @foreach (var p in portals) {
+            <a href="@p.Url()" class="nav-item">@GetTitle(p)</a>
+        }
+    }
+
+    <span class="nav-label">Quick Links</span>
+    <a href="/search" class="nav-item active">Search</a>
+    @* MKTZZ 24042026: fixed /my-membership → /my-greens-membership/ *@
+    <a href="/my-greens-membership/" class="nav-item">My membership!</a>
+</aside>
+
+<main class="main">
+    <div class="search-card">
+        <h1 style="margin-top:0;">🔍 Search Greenhouse</h1>
+        <form action="/search" method="GET">
+            <input type="text" name="query" class="search-field" placeholder="Search..." value="@query">
+            <button type="submit" class="search-btn">Run Search</button>
+        </form>
+
+        <div style="margin-top: 40px;">
+            @if (!string.IsNullOrEmpty(query)) {
+                @if (!results.Any()) {
+                    <p style="color:#999; font-style:italic;">No results found for "@query".</p>
+                }
+                @foreach (var result in results) {
+                    bool isMedia = result.ItemType == PublishedItemType.Media;
+                    if (isMedia) {
+                        var relations = _relationService.GetByChildId(result.Id);
+                        foreach (var rel in relations) {
+                            var pPage = umbracoHelper.Content(rel.ParentId);
+                            if (pPage != null) {
+                                var canAccess = HasAccess(pPage.Id);
+                                if (canAccess) {
+                                    <div class="result-item">
+                                        <div class="meta-text">Portal: @GetPortalName(pPage)</div>
+                                        <a href="@pPage.Url()" style="font-weight:700; color:var(--green); text-decoration:none; font-size:20px;">@GetTitle(pPage)</a>
+                                        <div class="found-in">Found in <strong>@GetPropertyLabel(pPage, result.Key)</strong>: @result.Name</div>
+                                    </div>
+                                }
+                            }
+                        }
+                    } if (result.Value<string>("__NodeTypeAlias") == "comment") {
+                       <div class="result-item">
+                            A Comment
+                       </div>
+                    } else {
+                        var canAccess = HasAccess(result.Id);
+                        if (canAccess) {
+                            <div class="result-item">
+                                <div class="meta-text">Portal: @GetPortalName(result)</div>
+                                <a href="@result.Url()" style="font-weight:700; color:var(--green); text-decoration:none; font-size:20px;">@GetTitle(result)</a>
+                            </div>
+                        }
+                    }
+                }
+            }
+        </div>
+    </div>
+</main>
+
+</body>
+</html>
